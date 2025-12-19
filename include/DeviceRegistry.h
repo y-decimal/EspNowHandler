@@ -12,6 +12,7 @@
 #endif
 
 #include <array>
+#include <map>
 #include <Preferences.h>
 
 using MacArray = std::array<uint8_t, 6>;
@@ -31,28 +32,20 @@ class DeviceRegistry
 public:
     DeviceRegistry();
 
-    const uint8_t *getMac(uint8_t id) const;
-    const MacArray getRawMac(uint8_t id) const;
+    bool addDevice(const char *deviceName, const uint8_t *macPtr);
+    bool removeDevice(const char *deviceName);
 
-    const uint8_t getIdFromMac(const uint8_t *macPtr) const;
-    const uint8_t getIdFromMac(MacArray &targetMac) const;
-
-    uint8_t setMac(uint8_t id, const uint8_t *macPtr);
-    uint8_t setMac(uint8_t id, const std::array<uint8_t, 6> &mac);
+    const uint8_t *getDeviceMac(const char *deviceName) const;
+    bool updateDeviceMac(const char *deviceName, const uint8_t *newMacPtr);
 
     void saveToFlash();
+
 #ifdef UNIT_TEST
     void readFromFlash();
 #endif
 
 private:
-    struct DeviceEntry
-    {
-        MacArray mac{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-        bool active = false;
-    };
-
-    std::array<DeviceEntry, REGISTRY_ARRAY_SIZE> table{};
+    std::map<const char *, MacArray> table;
 
     Preferences prefs;
 
