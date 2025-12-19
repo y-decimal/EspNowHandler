@@ -7,56 +7,31 @@ DeviceRegistry::DeviceRegistry()
 #endif
 }
 
-const uint8_t *DeviceRegistry::getMac(uint8_t id) const
+bool DeviceRegistry::addDevice(const char *deviceName, const uint8_t *macPtr)
 {
-    if (id >= REGISTRY_ARRAY_SIZE)
-        return nullptr;
-    return table[id].mac.data();
-}
-
-const std::array<uint8_t, 6> DeviceRegistry::getRawMac(uint8_t id) const
-{
-    if (id >= REGISTRY_ARRAY_SIZE)
-        return MacArray{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    return table[id].mac;
-}
-
-const uint8_t DeviceRegistry::getIdFromMac(const uint8_t *macPtr) const
-{
-    for (uint8_t i = 0; i <= REGISTRY_ARRAY_SIZE; ++i)
+    if (table.find(deviceName) != table.end())
     {
-        if (memcmp(table[i].mac.data(), macPtr, 6) == 0 && table[i].active)
-            return i;
+        return false; // Device already exists
     }
-    return (uint8_t)RegistryStatus::ERROR_MAC_NOT_FOUND;
+
+    MacArray macArray;
+    memcpy(macArray.data(), macPtr, 6);
+    table[deviceName] = macArray;
+    return true;
 }
 
-const uint8_t DeviceRegistry::getIdFromMac(std::array<uint8_t, 6> &targetMac) const
+bool DeviceRegistry::removeDevice(const char *deviceName)
 {
-    for (uint8_t i = 0; i <= REGISTRY_ARRAY_SIZE; ++i)
+    return table.erase(deviceName) > 0;
+}
+
+const uint8_t *DeviceRegistry::getDeviceMac(const char *deviceName) const
+{
+    if (table.find(deviceName) == table.end())
     {
-        if (table[i].mac == targetMac && table[i].active)
-            return i;
+        return nullptr; // Device not found
     }
-    return (uint8_t)RegistryStatus::ERROR_MAC_NOT_FOUND;
-}
-
-uint8_t DeviceRegistry::setMac(uint8_t id, const uint8_t *macPtr)
-{
-    if (id >= REGISTRY_ARRAY_SIZE)
-        return (uint8_t)RegistryStatus::ERROR_INVALID_ID;
-    memcpy(table[id].mac.data(), macPtr, 6);
-    table[id].active = true;
-    return (uint8_t)RegistryStatus::SUCCESS;
-}
-
-uint8_t DeviceRegistry::setMac(uint8_t id, const std::array<uint8_t, 6> &mac)
-{
-    if (id >= REGISTRY_ARRAY_SIZE)
-        return (uint8_t)RegistryStatus::ERROR_INVALID_ID;
-    table[id].mac = mac;
-    table[id].active = true;
-    return (uint8_t)RegistryStatus::SUCCESS;
+    return table.at(deviceName).data();
 }
 
 void DeviceRegistry::saveToFlash()
@@ -75,7 +50,7 @@ void DeviceRegistry::readFromFlash()
     if (prefs.getBytes(REGISTRY_KEY, (uint8_t *)&table, sizeof(table)) == 0)
     {
         // If no data was read, initialize the table to default values
-        table.fill(DeviceEntry{});
+        table.clear();
     }
     prefs.end();
 #endif
