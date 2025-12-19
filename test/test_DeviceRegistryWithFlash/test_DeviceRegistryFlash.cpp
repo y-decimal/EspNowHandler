@@ -36,12 +36,12 @@ bool check_FLASH_not_empty()
     return len > 0;
 }
 
-void test_USE_FLASH_defined(void)
+void test_USE_FLASH_true(void)
 {
-#ifdef USE_FLASH
-    TEST_ASSERT_TRUE(USE_FLASH);
+#if USE_FLASH
+    TEST_PASS();
 #else
-    TEST_ASSERT_FALSE(USE_FLASH);
+    TEST_FAIL_MESSAGE("USE_FLASH is not true");
 #endif
 }
 
@@ -81,7 +81,7 @@ void setup()
 {
     delay(2000); // Wait for serial monitor
     UNITY_BEGIN();
-    RUN_TEST(test_USE_FLASH_defined);
+    RUN_TEST(test_USE_FLASH_true);
     RUN_TEST(test_Registry_flash_initially_empty);
     RUN_TEST(test_Registry_flash_not_empty_after_save);
     RUN_TEST(test_Registry_still_empty_after_test);
