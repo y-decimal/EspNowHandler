@@ -22,9 +22,7 @@ enum class RegistryStatus : uint8_t
 {
     SUCCESS = 251,
     ERROR_INVALID_ID = 252,
-    ERROR_MAC_NOT_FOUND = 253,
-    ERROR_FLASH_READ = 254,
-    ERROR_FLASH_WRITE = 255
+    ERROR_MAC_NOT_FOUND = 253
 };
 
 class DeviceRegistry
