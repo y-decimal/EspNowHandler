@@ -11,12 +11,29 @@ void setUp(void)
     unitPrefs.clear();
     unitPrefs.end();
     registry = new DeviceRegistry();
-    registry->saveToFlash();
 }
 
 void tearDown(void)
 {
     delete registry;
+}
+
+bool check_FLASH_empty()
+{
+    unitPrefs.begin("dReg", false);
+    size_t len = unitPrefs.getBytesLength("val");
+    unitPrefs.end();
+    delay(100); // Ensure flash operations complete
+    return len == 0;
+}
+
+bool check_FLASH_not_empty()
+{
+    unitPrefs.begin("dReg", false);
+    size_t len = unitPrefs.getBytesLength("val");
+    unitPrefs.end();
+    delay(100); // Ensure flash operations complete
+    return len > 0;
 }
 
 void test_USE_FLASH_defined(void)
