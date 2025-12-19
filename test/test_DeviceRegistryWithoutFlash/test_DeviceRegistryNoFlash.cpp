@@ -12,12 +12,12 @@ void tearDown(void)
 {
 }
 
-void test_USE_FLASH_defined(void)
+void test_USE_FLASH_true(void)
 {
-#ifdef USE_FLASH
-    TEST_ASSERT_FALSE(USE_FLASH);
+#if USE_FLASH
+    TEST_FAIL_MESSAGE("USE_FLASH is true");
 #else
-    TEST_ASSERT_TRUE(USE_FLASH);
+    TEST_PASS();
 #endif
 }
 
@@ -71,7 +71,7 @@ void setup()
 {
     delay(2000); // Wait for serial monitor
     UNITY_BEGIN();
-    RUN_TEST(test_USE_FLASH_defined);
+    RUN_TEST(test_USE_FLASH_true);
     RUN_TEST(test_getIdFromMac_with_pointer_found);
     RUN_TEST(test_getIdFromMac_with_pointer_not_found);
     RUN_TEST(test_getIdFromMac_with_array_found);
