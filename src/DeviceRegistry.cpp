@@ -70,7 +70,11 @@ void DeviceRegistry::readFromFlash()
 {
 #if USE_FLASH
     prefs.begin(REGISTRY_NAMESPACE, false);
-    prefs.getBytes(REGISTRY_KEY, (uint8_t *)&table, sizeof(table));
+    if(prefs.getBytes(REGISTRY_KEY, (uint8_t *)&table, sizeof(table)) == 0)
+    {
+        // If no data was read, initialize the table to default values
+        table.fill(DeviceEntry{});
+    }
     prefs.end();
 #endif
 }
