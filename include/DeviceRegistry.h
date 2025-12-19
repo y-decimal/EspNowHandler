@@ -22,6 +22,8 @@ class DeviceRegistry
 public:
     DeviceRegistry();
 
+    const uint8_t REGISTRY_SIZE = 254;
+
     const uint8_t *getMac(uint8_t id) const;
     const MacArray getRawMac(uint8_t id) const;
 
