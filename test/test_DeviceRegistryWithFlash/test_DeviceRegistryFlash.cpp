@@ -3,9 +3,13 @@
 #include <DeviceRegistry.cpp>
 
 DeviceRegistry *registry;
+Preferences unitPrefs;
 
 void setUp(void)
 {
+    unitPrefs.begin("dReg", false);
+    unitPrefs.clear();
+    unitPrefs.end();
     registry = new DeviceRegistry();
     registry->saveToFlash();
 }
