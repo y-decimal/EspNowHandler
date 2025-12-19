@@ -35,7 +35,7 @@ void test_getIdFromMac_with_pointer_not_found(void)
     uint8_t testMac[6] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
 
     uint8_t id = registry.getIdFromMac(testMac);
-    TEST_ASSERT_EQUAL_UINT8(0xFF, id);
+    TEST_ASSERT_EQUAL_UINT8((uint8_t)RegistryStatus::ERROR_MAC_NOT_FOUND, id);
 }
 
 void test_getIdFromMac_with_array_found(void)
@@ -52,7 +52,7 @@ void test_getIdFromMac_with_array_not_found(void)
     std::array<uint8_t, 6> testMac = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     uint8_t id = registry.getIdFromMac(testMac);
-    TEST_ASSERT_EQUAL_UINT8(0xFF, id);
+    TEST_ASSERT_EQUAL_UINT8((uint8_t)RegistryStatus::ERROR_MAC_NOT_FOUND, id);
 }
 
 void test_getIdFromMac_multiple_devices(void)
