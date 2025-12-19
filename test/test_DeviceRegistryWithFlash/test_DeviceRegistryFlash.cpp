@@ -74,6 +74,8 @@ void test_getIdFromMac_with_pointer_found(void)
     
     DeviceRegistry newRegistry = DeviceRegistry();
     uint8_t id = newRegistry.getIdFromMac(testMac);
+    boolean found = id != (uint8_t)RegistryStatus::ERROR_MAC_NOT_FOUND;
+    TEST_ASSERT_TRUE(found);
     TEST_ASSERT_EQUAL_UINT8(5, id);
 }
 
