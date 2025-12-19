@@ -2,7 +2,9 @@
 
 DeviceRegistry::DeviceRegistry()
 {
+#if USE_FLASH
     DeviceRegistry::readFromFlash();
+#endif
 }
 
 const uint8_t *DeviceRegistry::getMac(uint8_t id) const
@@ -49,14 +51,18 @@ void DeviceRegistry::setMac(uint8_t id, const std::array<uint8_t, 6> &mac)
 
 void DeviceRegistry::saveToFlash()
 {
+#if USE_FLASH
     prefs.begin(REGISTRY_NAMESPACE, false);
     prefs.putBytes(REGISTRY_KEY, (const uint8_t *)&table, sizeof(table));
     prefs.end();
+#endif
 }
 
 void DeviceRegistry::readFromFlash()
 {
+#if USE_FLASH
     prefs.begin(REGISTRY_NAMESPACE, false);
     prefs.getBytes(REGISTRY_KEY, (uint8_t *)&table, sizeof(table));
     prefs.end();
+#endif
 }

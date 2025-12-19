@@ -1,6 +1,16 @@
 #ifndef DEVICEREGISTRY_H
 #define DEVICEREGISTRY_H
 
+#ifdef UNIT_TEST
+#ifdef TEST_WITH_FLASH
+#define USE_FLASH true
+#else
+#define USE_FLASH false
+#endif
+#else
+#define USE_FLASH true
+#endif
+
 #include <array>
 #include <Preferences.h>
 
