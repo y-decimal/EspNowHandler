@@ -15,6 +15,17 @@
 #include <Preferences.h>
 
 using MacArray = std::array<uint8_t, 6>;
+constexpr uint8_t REGISTRY_ARRAY_SIZE = 251;
+// First 251 IDs (0-250) used for devices, (251-255) reserved for error handling
+
+enum class RegistryStatus : uint8_t
+{
+    SUCCESS = 251,
+    ERROR_INVALID_ID = 252,
+    ERROR_MAC_NOT_FOUND = 253,
+    ERROR_FLASH_READ = 254,
+    ERROR_FLASH_WRITE = 255
+};
 
 class DeviceRegistry
 {
@@ -22,18 +33,19 @@ class DeviceRegistry
 public:
     DeviceRegistry();
 
-    const uint8_t REGISTRY_SIZE = 254;
-
     const uint8_t *getMac(uint8_t id) const;
     const MacArray getRawMac(uint8_t id) const;
 
     const uint8_t getIdFromMac(const uint8_t *macPtr) const;
     const uint8_t getIdFromMac(MacArray &targetMac) const;
 
-    void setMac(uint8_t id, const uint8_t *macPtr);
-    void setMac(uint8_t id, const std::array<uint8_t, 6> &mac);
+    uint8_t setMac(uint8_t id, const uint8_t *macPtr);
+    uint8_t setMac(uint8_t id, const std::array<uint8_t, 6> &mac);
 
     void saveToFlash();
+#ifdef UNIT_TEST
+    void readFromFlash();
+#endif
 
 private:
     struct DeviceEntry
@@ -42,14 +54,16 @@ private:
         bool active = false;
     };
 
-    std::array<DeviceEntry, sizeof(uint8_t)> table{};
+    std::array<DeviceEntry, REGISTRY_ARRAY_SIZE> table{};
 
     Preferences prefs;
 
     static constexpr const char *REGISTRY_NAMESPACE = "dReg";
     static constexpr const char *REGISTRY_KEY = "val";
 
+#ifndef UNIT_TEST
     void readFromFlash();
+#endif
 };
 
 #endif
