@@ -34,6 +34,17 @@ const uint8_t *DeviceRegistry::getDeviceMac(const char *deviceName) const
     return table.at(deviceName).data();
 }
 
+bool DeviceRegistry::updateDeviceMac(const char *deviceName, const uint8_t *newMacPtr)
+{
+    if (table.find(deviceName) == table.end())
+    {
+        return false; // Device not found
+    }
+
+    memcpy(table[deviceName].data(), newMacPtr, 6);
+    return true;
+}
+
 void DeviceRegistry::saveToFlash()
 {
 #if USE_FLASH
