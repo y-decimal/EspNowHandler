@@ -7,8 +7,8 @@ using PacketCallback = std::function<void(const uint8_t *dataPtr, size_t len, ui
 
 class EspNowHandler
 {
-private: 
-
+private:
+    bool pairDevice(const char *targetName); // Pairs a specific device by sending broadcasts with the target device name and the sender device name, the receiving side checks if the device name matches its own name, and if it does saves the sender device name and MAC to its registry, disables discovery mode if active, then sends an identical packet to the sender specifically. The sender receives the answer, saves the device name and MAC to its registry, then disables discovery mode if active.
 
 public:
     EspNowHandler(const char *selfDeviceName); // Initializes the class and registers the given name as the own device name (mainly used for pairing).
