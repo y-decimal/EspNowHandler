@@ -1,0 +1,12 @@
+{
+    "name": "EspNowHandler",
+    "description": "A library for handling ESP-NOW communication on ESP32 devices, providing easy-to-use functions for sending and receiving data.",
+    "version": "1.0.0",
+    "author": "Decimal",
+    "frameworks": [
+        "Arduino"
+    ],
+    "platforms": [
+        "espressif32"
+    ]
+}
