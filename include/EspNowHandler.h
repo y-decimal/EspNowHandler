@@ -69,6 +69,7 @@ EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
     EspNowHandler(DeviceID selfDeviceID)
 {
     registry = new DeviceRegistry<DeviceID, DeviceCount>();
+    selfID = selfDeviceID;
 }
 
 ESP_NOW_HANDLER_TEMPLATE
