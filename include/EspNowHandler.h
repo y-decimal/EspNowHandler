@@ -125,8 +125,7 @@ bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
     {
         return false;
     }
-    const uint8_t checksum = calcChecksum(dataPtr);
-    PacketHeader packetHeader = {packetTypeID, len, checksum};
+    PacketHeader packetHeader = {packetTypeID, len};
     const uint8_t *data = packetHeader + dataPtr;
 }
 
