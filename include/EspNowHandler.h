@@ -87,7 +87,7 @@ const uint8_t EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
 
 ESP_NOW_HANDLER_TEMPLATE
 bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
-    registerComms(DeviceID targetID, bool pairingMode = false)
+    registerComms(DeviceID targetID, bool pairingMode)
 {
     const uint8_t targetMac[6] = {};
     memcpy(targetMac, registry->getDeviceMac(targetID), 6);
