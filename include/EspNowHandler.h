@@ -3,6 +3,7 @@
 
 #include <DeviceRegistry.h>
 #include <esp_now.h>
+#include <atomic>
 
 using PacketCallback = std::function<void(const uint8_t *dataPtr, size_t len, uint8_t sender)>;
 
@@ -17,17 +18,34 @@ private:
     static void onDataSent(const uint8_t *macAddrPtr, esp_now_send_status_t status);
     static void onDataRecv(const uint8_t *macAddrPtr, const uint8_t *dataPtr, int data_len);
     static constexpr size_t toIndex(PacketType packetType);
+    static constexpr uint8_t maxRetries = 30;
     static const uint8_t calcChecksum(const uint8_t *dataPtr);
 
     struct PacketHeader
     {
         PacketType type;
         size_t len;
+    };
+
+    struct DiscoveryPacket
+    {
+        uint8_t sequence;
+        DeviceID senderID;
+        DeviceID targetID;
         uint8_t checksum;
+    };
+
+    enum class PairingState : uint8_t
+    {
+        Waiting,
+        Paired,
+        Timeout
     };
 
     DeviceRegistry<DeviceID, DeviceCount> *registry;
     std::array<PacketCallback, PacketCount> packetCallbacks = {};
+    DeviceID selfID;
+    volatile std::atomic<PairingState> pairingState = PairingState::Waiting;
 
     friend class EspNowHandlerTest;
 
@@ -127,6 +145,18 @@ bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
     }
     PacketHeader packetHeader = {packetTypeID, len};
     const uint8_t *data = packetHeader + dataPtr;
+}
+
+ESP_NOW_HANDLER_TEMPLATE
+bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
+    pairDevice(DeviceID targerDeviceID)
+{
+    pairingState = PairingState::Waiting;
+    uint8_t retries = 0;
+    while (pairingState == PairingState::Waiting && retries < maxRetries)
+    {
+        const uint8_t *targetMac = BroadCastMac;
+    }
 }
 
 #endif
