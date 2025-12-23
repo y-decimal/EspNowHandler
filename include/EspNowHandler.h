@@ -16,6 +16,8 @@ private:
 
     static void onDataSent(const uint8_t *macAddrPtr, esp_now_send_status_t status);
     static void onDataRecv(const uint8_t *macAddrPtr, const uint8_t *dataPtr, int data_len);
+    static constexpr size_t toIndex(PacketType packetType);
+    static const uint8_t calcChecksum(const uint8_t *dataPtr);
 
     struct PacketHeader
     {
@@ -25,6 +27,9 @@ private:
     };
 
     DeviceRegistry<DeviceID, DeviceCount> *registry;
+    std::array<PacketCallback, PacketCount> packetCallbacks = {};
+
+    friend class EspNowHandlerTest;
 
 public:
     EspNowHandler(DeviceID selfDeviceID); // Initializes the class and registers the given name as the own device name (mainly used for pairing).
@@ -62,6 +67,25 @@ bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
 }
 
 ESP_NOW_HANDLER_TEMPLATE
+constexpr size_t EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
+    toIndex(PacketType packetType)
+{
+    return static_cast<size_t>(packetType);
+}
+
+ESP_NOW_HANDLER_TEMPLATE
+const uint8_t EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
+    calcChecksum(const uint8_t *dataPtr)
+{
+    uint8_t checksum = 0;
+    for (size_t i = 0; i < sizeof(dataPtr); ++i)
+    {
+        checksum ^= dataPtr[i];
+    }
+    return checksum;
+}
+
+ESP_NOW_HANDLER_TEMPLATE
 bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
     registerComms(DeviceID targetID, bool pairingMode = false)
 {
@@ -85,8 +109,25 @@ bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
 
 ESP_NOW_HANDLER_TEMPLATE
 bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
-    registerCallback(PacketType packetTypeID, PacketCallback)
+    registerCallback(PacketType packetTypeID, PacketCallback callback)
 {
+    packetCallbacks[toIndex(packetTypeID)] = callback;
+    return true;
+}
+
+ESP_NOW_HANDLER_TEMPLATE
+bool EspNowHandler<DeviceID, PacketType, DeviceCount, PacketCount>::
+    sendPacket(DeviceID targetID, PacketType packetTypeID,
+               const uint8_t *dataPtr, size_t len)
+{
+    const uint8_t *targetMac = this->registry->getMac(targetID);
+    if (targetMac == nullptr)
+    {
+        return false;
+    }
+    const uint8_t checksum = calcChecksum(dataPtr);
+    PacketHeader packetHeader = {packetTypeID, len, checksum};
+    const uint8_t *data = packetHeader + dataPtr;
 }
 
 #endif
