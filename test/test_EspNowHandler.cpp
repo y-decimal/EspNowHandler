@@ -36,8 +36,8 @@ public:
 
     static void test_toIndex_convertsPacketTypeToSize()
     {
-        size_t index0 = EspNowHandler<TestDeviceID, TestPacketType, 2, 2>::toIndex(TestPacketType::PACKET_TYPE_1);
-        size_t index1 = EspNowHandler<TestDeviceID, TestPacketType, 2, 2>::toIndex(TestPacketType::PACKET_TYPE_2);
+        size_t index0 = EspNowHandler<TestDeviceID, TestPacketType>::toIndex(TestPacketType::PACKET_TYPE_1);
+        size_t index1 = EspNowHandler<TestDeviceID, TestPacketType>::toIndex(TestPacketType::PACKET_TYPE_2);
 
         TEST_ASSERT_EQUAL(0, index0);
         TEST_ASSERT_EQUAL(1, index1);
@@ -54,7 +54,7 @@ public:
 
     static void test_registerCallback_storesCallback()
     {
-        EspNowHandler<TestDeviceID, TestPacketType, 2, 2> handler(TestDeviceID::DEVICE_1);
+        EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
         bool result = handler.registerCallback(TestPacketType::PACKET_TYPE_1, [](const uint8_t *data, size_t len, uint8_t sender) {});
 
         TEST_ASSERT_TRUE(result);
@@ -63,14 +63,14 @@ public:
 
     static void test_constructor_initializesRegistry()
     {
-        EspNowHandler<TestDeviceID, TestPacketType, 2, 2> handler(TestDeviceID::DEVICE_1);
+        EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
 
         TEST_ASSERT_NOT_NULL(handler.registry);
     }
 
     static void test_packetCallbacksArray_isInitializedEmpty()
     {
-        EspNowHandler<TestDeviceID, TestPacketType, 2, 2> handler(TestDeviceID::DEVICE_1);
+        EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
 
         TEST_ASSERT_NULL(handler.packetCallbacks[0]);
         TEST_ASSERT_NULL(handler.packetCallbacks[1]);
