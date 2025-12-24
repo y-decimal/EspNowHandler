@@ -20,19 +20,22 @@ private:
     struct DiscoveryPacket;
     enum class PairingState : uint8_t;
     enum class InternalPacket : uint8_t;
+    volatile std::atomic<PairingState> pairingState = PairingState::Waiting;
+
+    static constexpr uint8_t maxRetries = 30;
+    static constexpr size_t DeviceCount = static_cast<size_t>(DeviceID::Count);
+    static constexpr size_t PacketCount = static_cast<size_t>(UserPacket::Count);
 
     bool pairDevice(DeviceID targetDeviceID); // Pairs a specific device by sending broadcasts with the target device ID and the sender device ID
 
     static void onDataSent(const uint8_t *macAddrPtr, esp_now_send_status_t status);
     static void onDataRecv(const uint8_t *macAddrPtr, const uint8_t *dataPtr, int data_len);
     static constexpr size_t toIndex(PacketType packetType);
-    static constexpr uint8_t maxRetries = 30;
-    static const uint8_t calcChecksum(const uint8_t *dataPtr);
+    static constexpr uint8_t calcChecksum(const uint8_t *dataPtr);
 
     DeviceRegistry<DeviceID, DeviceCount> *registry;
     std::array<PacketCallback, PacketCount> packetCallbacks = {};
     DeviceID selfID;
-    volatile std::atomic<PairingState> pairingState = PairingState::Waiting;
 
     friend class EspNowHandlerTest;
 
