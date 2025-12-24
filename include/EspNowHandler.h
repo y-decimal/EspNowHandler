@@ -187,8 +187,9 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
   uint8_t retries = 0;
   while (pairingState == PairingState::Waiting && retries < maxRetries) {
     const uint8_t *targetMac = BroadCastMac;
-
-    const uint8_t checksum = calcChecksum(retries + selfID + targerDeviceID);
+    uint8_t fields[3] = {retries, static_cast<uint8_t>(selfID),
+                         static_cast<uint8_t>(targerDeviceID)};
+    const uint8_t checksum = calcChecksum(fields, sizeof(fields));
 
     DiscoveryPacket discoveryPacket = {retries, selfID, targerDeviceID,
                                        checksum};
