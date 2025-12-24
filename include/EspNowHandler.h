@@ -224,4 +224,29 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
   return true;
 }
 
+HANDLER_TEMPLATE
+void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
+                                const uint8_t *dataPtr, int data_len) {
+  if (!instance)
+    return; // Safety check
+  
+  if (data_len < sizeof(PacketHeader))
+    return; // Not enough data for header
+  
+  PacketHeader header;
+  memcpy(&header, dataPtr, sizeof(PacketHeader));
+  
+  // Bounds check for callback array
+  if (header.type >= PacketCount)
+    return;
+  
+  // Check if callback is registered
+  if (!instance->packetCallbacks[header.type])
+    return;
+  
+  // Pass data after the header to the callback
+  const uint8_t *payloadPtr = dataPtr + sizeof(PacketHeader);
+  instance->packetCallbacks[header.type](payloadPtr, header.len, header.sender);
+}
+
 #endif
