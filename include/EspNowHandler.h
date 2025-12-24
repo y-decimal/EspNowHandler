@@ -43,7 +43,7 @@ private:
   static void onDataRecv(const uint8_t *macAddrPtr, const uint8_t *dataPtr,
                          int data_len);
   static constexpr size_t toIndex(PacketType packetType);
-  static constexpr uint8_t calcChecksum(const uint8_t *dataPtr);
+  static uint8_t calcChecksum(const uint8_t *dataPtr, size_t len);
 
   DeviceRegistry<DeviceID> *registry;
   std::array<PacketCallback, PacketCount> packetCallbacks = {};
@@ -135,9 +135,9 @@ constexpr size_t HANDLER_PARAMS::toIndex(PacketType packetType) {
 }
 
 HANDLER_TEMPLATE
-constexpr uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr) {
+uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr, size_t len) {
   uint8_t checksum = 0;
-  for (size_t i = 0; i < sizeof(dataPtr); ++i) {
+  for (size_t i = 0; i < len; ++i) {
     checksum ^= dataPtr[i];
   }
   return checksum;
