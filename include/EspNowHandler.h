@@ -207,9 +207,15 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
     DiscoveryPacket discoveryPacket = {retries, selfID, targerDeviceID,
                                        checksum};
 
-    uint8_t DiscoveryType = 0xFF;
+    PacketHeader packetHeader = {InternalPacket::Discovery,
+                                 sizeof(DiscoveryPacket)};
 
-    PacketHeader packetHeader = {static_cast<PacketHeader>(DiscoveryType)};
+    const uint8_t data[2] = {&discoveryPacket, &packetHeader};
+
+    esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
+    if (sendSuccess != ESP_OK) {
+      return false;
+    }
   }
 
   if (pairingState == PairingState::Timeout) {
