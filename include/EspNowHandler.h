@@ -131,7 +131,7 @@ bool HANDLER_PARAMS::begin() {
 
 HANDLER_TEMPLATE
 constexpr size_t HANDLER_PARAMS::toIndex(PacketType packetType) {
-  return static_cast<size_t>(packetType);
+  return static_cast<size_t>(packetType.encoded);
 }
 
 HANDLER_TEMPLATE
