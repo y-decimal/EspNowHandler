@@ -7,12 +7,18 @@
 
 using PacketCallback = std::function<void(const uint8_t *dataPtr, size_t len, uint8_t sender)>;
 
-#define ESP_NOW_HANDLER_TEMPLATE template <typename DeviceID, typename PacketType, size_t DeviceCount, size_t PacketCount>
+#define ESP_NOW_HANDLER_TEMPLATE template <typename DeviceID, typename UserPacket, size_t DeviceCount, size_t PacketCount>
 
 ESP_NOW_HANDLER_TEMPLATE
 class EspNowHandler
 {
 private:
+    struct PacketType;
+    struct PacketHeader;
+    struct DiscoveryPacket;
+    enum class PairingState : uint8_t;
+    enum class InternalPacket : uint8_t;
+
     bool pairDevice(DeviceID targetDeviceID); // Pairs a specific device by sending broadcasts with the target device ID and the sender device ID
 
     static void onDataSent(const uint8_t *macAddrPtr, esp_now_send_status_t status);
@@ -21,10 +27,28 @@ private:
     static constexpr uint8_t maxRetries = 30;
     static const uint8_t calcChecksum(const uint8_t *dataPtr);
 
+    DeviceRegistry<DeviceID, DeviceCount> *registry;
+    std::array<PacketCallback, PacketCount> packetCallbacks = {};
+    DeviceID selfID;
+    volatile std::atomic<PairingState> pairingState = PairingState::Waiting;
+
+    friend class EspNowHandlerTest;
+
     struct PacketHeader
     {
-        PacketType type;
-        size_t len;
+        uint8_t type;
+        uint16_t len;
+    };
+
+    struct PacketType
+    {
+        uint8_t encoded;
+
+        PacketType(UserPacket packet)
+            : encoded(static_cast<uint8_t>(packet)) {}
+
+        PacketType(InternalPacket packet)
+            : encoded(128 + static_cast<uint8_t>(packet)) {}
     };
 
     struct DiscoveryPacket
@@ -42,12 +66,11 @@ private:
         Timeout
     };
 
-    DeviceRegistry<DeviceID, DeviceCount> *registry;
-    std::array<PacketCallback, PacketCount> packetCallbacks = {};
-    DeviceID selfID;
-    volatile std::atomic<PairingState> pairingState = PairingState::Waiting;
-
-    friend class EspNowHandlerTest;
+    enum class InternalPacket : uint8_t
+    {
+        Discovery,
+        Count
+    };
 
 public:
     EspNowHandler(DeviceID selfDeviceID); // Initializes the class and registers the given name as the own device name (mainly used for pairing).
@@ -59,7 +82,7 @@ public:
     bool registerCallback(PacketType packetTypeID, PacketCallback); // Registers a callback function for a specific packet type. Multiple callbacks per type not possible. PacketCallback must be format "void function(const uint8_t dataPtr, size_t len, uint8_t sender)"
 
     bool sendPacket(DeviceID targetID,
-                    PacketType packetTypeID,
+                    PacketType packetType,
                     const uint8_t *dataPtr,
                     size_t len); // Sends a packet of the type "packetType" to a device with the corresponding commID (as returned when calling registerComms)
 };
