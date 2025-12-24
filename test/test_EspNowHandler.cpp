@@ -69,7 +69,6 @@ public:
     const TestDeviceID senderID = TestDeviceID::DEVICE_2;
     const uint8_t senderMac[6] = {0, 1, 2, 3, 4, 5};
     const uint8_t data = 0xAC;
-    bool passed = false;
 
     auto callback = [&](const uint8_t *dataPtr, size_t len,
                         TestDeviceID sender) {
@@ -77,7 +76,7 @@ public:
       TEST_ASSERT_EQUAL(sizeof(data), len);
       TEST_ASSERT_EQUAL(static_cast<uint8_t>(senderID),
                         static_cast<uint8_t>(sender));
-      passed = true;
+      TEST_PASS();
     };
 
     handler.registerCallback(TestPacketType::TYPE_1, callback);
@@ -93,7 +92,6 @@ public:
 
     handler.onDataRecv(senderMac, reinterpret_cast<const uint8_t *>(&packet),
                        sizeof(packet));
-    TEST_ASSERT_TRUE(passed);
   }
 };
 
