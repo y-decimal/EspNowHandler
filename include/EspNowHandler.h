@@ -185,10 +185,16 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
   if (targetMac == nullptr) {
     return false;
   }
+
   PacketHeader packetHeader = {packetType.encoded, selfID, len};
-  const uint8_t data[2] = {};
+
+  size_t packetSize = sizeof(dataPtr) + sizeof(packetHeader) + sizeof(len);
+
+  uint8_t data[packetSize] = {};
+
   memcpy(data, &packetHeader, sizeof(PacketHeader));
-  memcpy(data + sizeof(PacketHeader), len, sizeof(len));
+  memcpy(data + sizeof(PacketHeader), dataPtr, sizeof(dataPtr));
+  memcpy(data + sizeof(PacketHeader) + sizeof(&dataPtr), len, sizeof(len));
 
   esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
   if (sendSuccess != ESP_OK) {
