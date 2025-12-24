@@ -6,9 +6,6 @@
 #include <esp_now.h>
 #include <type_traits>
 
-using PacketCallback =
-    std::function<void(const uint8_t *dataPtr, size_t len, uint8_t sender)>;
-
 #define HANDLER_TEMPLATE template <typename DeviceID, typename UserPacket>
 
 #define HANDLER_PARAMS EspNowHandler<DeviceID, UserPacket>
@@ -16,6 +13,9 @@ using PacketCallback =
 HANDLER_TEMPLATE
 class EspNowHandler {
 private:
+  using PacketCallback =
+      std::function<void(const uint8_t *dataPtr, size_t len, DeviceID sender)>;
+
   static_assert(std::is_enum<UserPacket>::value,
                 "UserPacket must be an enum type");
   static_assert(std::is_same<typename std::underlying_type<UserPacket>::type,
