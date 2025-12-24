@@ -258,4 +258,10 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
   instance->packetCallbacks[header.type](payloadPtr, header.len, header.sender);
 }
 
+HANDLER_TEMPLATE
+void HANDLER_PARAMS::onDataSent(const uint8_t *macAddrPtr,
+                                esp_now_send_status_t status) {
+  return; // Possibly implement something here later
+}
+
 #endif
