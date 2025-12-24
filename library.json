@@ -1,12 +1,24 @@
 {
     "name": "EspNowHandler",
-    "description": "A library for handling ESP-NOW communication on ESP32 devices, providing easy-to-use functions for sending and receiving data.",
+    "description": "A library for handling ESP-NOW communication",
     "version": "1.0.0",
-    "author": "Decimal",
+    "keywords": [
+        "espnow",
+        "communication",
+        "arduino"
+    ],
+    "authors": [
+        {
+            "name": "y-decimal"
+        }
+    ],
     "frameworks": [
         "Arduino"
     ],
     "platforms": [
         "espressif32"
-    ]
+    ],
+    "dependencies": {
+        "DeviceRegistry": "https://github.com/y-decimal/DeviceRegistry.git"
+    }
 }
