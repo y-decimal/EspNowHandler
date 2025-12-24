@@ -115,7 +115,7 @@ struct PacketHeader {
 // Template implementation
 HANDLER_TEMPLATE
 HANDLER_PARAMS::EspNowHandler(DeviceID selfDeviceID) {
-  registry = new DeviceRegistry<DeviceID, DeviceCount>();
+  registry = new DeviceRegistry<DeviceID>();
   selfID = selfDeviceID;
 }
 
