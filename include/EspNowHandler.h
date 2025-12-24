@@ -107,8 +107,10 @@ enum class HANDLER_PARAMS::PairingState : uint8_t { Waiting, Paired, Timeout };
 HANDLER_TEMPLATE
 enum class HANDLER_PARAMS::InternalPacket : uint8_t { Discovery, Count };
 
-struct PacketHeader {
+HANDLER_TEMPLATE
+struct HANDLER_PARAMS::PacketHeader {
   uint8_t type;
+  DeviceID sender;
   uint16_t len;
 };
 
