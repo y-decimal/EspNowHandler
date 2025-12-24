@@ -45,7 +45,7 @@ public:
     EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
     bool result = handler.registerCallback(
         TestPacketType::TYPE_1,
-        [](const uint8_t *data, size_t len, uint8_t sender) {});
+        [](const uint8_t *data, size_t len, TestDeviceID sender) {});
 
     TEST_ASSERT_TRUE(result);
     TEST_ASSERT_NOT_NULL(handler.packetCallbacks[0]);
