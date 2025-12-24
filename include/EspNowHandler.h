@@ -33,6 +33,8 @@ private:
   static constexpr size_t DeviceCount = static_cast<size_t>(DeviceID::Count);
   static constexpr size_t PacketCount = static_cast<size_t>(UserPacket::Count);
 
+  static HANDLER_PARAMS *instance; // Static instance pointer for callbacks
+
   bool
   pairDevice(DeviceID targetDeviceID); // Pairs a specific device by sending
                                        // broadcasts with the target device ID
@@ -116,9 +118,13 @@ struct HANDLER_PARAMS::PacketHeader {
 
 // Template implementation
 HANDLER_TEMPLATE
+HANDLER_PARAMS *HANDLER_PARAMS::instance = nullptr;
+
+HANDLER_TEMPLATE
 HANDLER_PARAMS::EspNowHandler(DeviceID selfDeviceID) {
   registry = new DeviceRegistry<DeviceID>();
   selfID = selfDeviceID;
+  instance = this; // Set static instance pointer
 }
 
 HANDLER_TEMPLATE
