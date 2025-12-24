@@ -7,9 +7,11 @@
 
 using PacketCallback = std::function<void(const uint8_t *dataPtr, size_t len, uint8_t sender)>;
 
-#define ESP_NOW_HANDLER_TEMPLATE template <typename DeviceID, typename UserPacket, size_t DeviceCount, size_t PacketCount>
+#define HANDLER_TEMPLATE template <typename DeviceID, typename UserPacket>
 
-ESP_NOW_HANDLER_TEMPLATE
+#define HANDLER_PARAMS EspNowHandler<DeviceID, UserPacket>
+
+HANDLER_TEMPLATE
 class EspNowHandler
 {
 private:
@@ -51,8 +53,8 @@ public:
 
 // Full definitions
 
-ESP_NOW_HANDLER_TEMPLATE
-struct EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::PacketType
+HANDLER_TEMPLATE
+struct HANDLER_PARAMS::PacketType
 {
     uint8_t encoded;
 
@@ -63,8 +65,8 @@ struct EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::PacketType
         : encoded(128 + static_cast<uint8_t>(packet)) {}
 };
 
-ESP_NOW_HANDLER_TEMPLATE
-struct EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::DiscoveryPacket
+HANDLER_TEMPLATE
+struct HANDLER_PARAMS::DiscoveryPacket
 {
     uint8_t sequence;
     DeviceID senderID;
@@ -72,16 +74,16 @@ struct EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::DiscoveryP
     uint8_t checksum;
 };
 
-ESP_NOW_HANDLER_TEMPLATE
-enum class EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::PairingState : uint8_t
+HANDLER_TEMPLATE
+enum class HANDLER_PARAMS::PairingState : uint8_t
 {
     Waiting,
     Paired,
     Timeout
 };
 
-ESP_NOW_HANDLER_TEMPLATE
-enum class EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::InternalPacket : uint8_t
+HANDLER_TEMPLATE
+enum class HANDLER_PARAMS::InternalPacket : uint8_t
 {
     Discovery,
     Count
@@ -94,17 +96,15 @@ struct PacketHeader
 };
 
 // Template implementation
-ESP_NOW_HANDLER_TEMPLATE
-EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    EspNowHandler(DeviceID selfDeviceID)
+HANDLER_TEMPLATE
+HANDLER_PARAMS::EspNowHandler(DeviceID selfDeviceID)
 {
     registry = new DeviceRegistry<DeviceID, DeviceCount>();
     selfID = selfDeviceID;
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    begin()
+HANDLER_TEMPLATE
+bool HANDLER_PARAMS::begin()
 {
     if (esp_now_init() != ESP_OK)
     {
@@ -115,16 +115,14 @@ bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
     return true;
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-constexpr size_t EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    toIndex(PacketType packetType)
+HANDLER_TEMPLATE
+constexpr size_t HANDLER_PARAMS::toIndex(PacketType packetType)
 {
     return static_cast<size_t>(packetType);
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-const uint8_t EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    calcChecksum(const uint8_t *dataPtr)
+HANDLER_TEMPLATE
+constexpr uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr)
 {
     uint8_t checksum = 0;
     for (size_t i = 0; i < sizeof(dataPtr); ++i)
@@ -134,9 +132,8 @@ const uint8_t EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
     return checksum;
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    registerComms(DeviceID targetID, bool pairingMode)
+HANDLER_TEMPLATE
+bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode)
 {
     const uint8_t targetMac[6] = {};
     memcpy(targetMac, registry->getDeviceMac(targetID), 6);
@@ -156,18 +153,16 @@ bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
     return true;
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    registerCallback(PacketType packetType, PacketCallback callback)
+HANDLER_TEMPLATE
+bool HANDLER_PARAMS::registerCallback(PacketType packetType, PacketCallback callback)
 {
     packetCallbacks[toIndex(packetType)] = callback;
     return true;
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    sendPacket(DeviceID targetID, PacketType packetType,
-               const uint8_t *dataPtr, size_t len)
+HANDLER_TEMPLATE
+bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
+                                const uint8_t *dataPtr, size_t len)
 {
     const uint8_t *targetMac = this->registry->getDeviceMac(targetID);
     if (targetMac == nullptr)
@@ -178,9 +173,8 @@ bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
     const uint8_t *data = packetHeader + dataPtr;
 }
 
-ESP_NOW_HANDLER_TEMPLATE
-bool EspNowHandler<DeviceID, UserPacket, DeviceCount, PacketCount>::
-    pairDevice(DeviceID targerDeviceID)
+HANDLER_TEMPLATE
+bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID)
 {
     pairingState = PairingState::Waiting;
     uint8_t retries = 0;
