@@ -44,7 +44,7 @@ private:
   static constexpr size_t toIndex(PacketType packetType);
   static constexpr uint8_t calcChecksum(const uint8_t *dataPtr);
 
-  DeviceRegistry<DeviceID, DeviceCount> *registry;
+  DeviceRegistry<DeviceID> *registry;
   std::array<PacketCallback, PacketCount> packetCallbacks = {};
   DeviceID selfID;
 
