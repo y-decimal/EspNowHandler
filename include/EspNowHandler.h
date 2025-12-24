@@ -27,7 +27,7 @@ private:
   struct DiscoveryPacket;
   enum class PairingState : uint8_t;
   enum class InternalPacket : uint8_t;
-  volatile std::atomic<PairingState> pairingState = PairingState::Waiting;
+  std::atomic<PairingState> pairingState{PairingState::Waiting};
 
   static constexpr uint8_t maxRetries = 30;
   static constexpr size_t DeviceCount = static_cast<size_t>(DeviceID::Count);
