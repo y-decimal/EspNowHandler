@@ -63,6 +63,38 @@ public:
     TEST_ASSERT_NULL(handler.packetCallbacks[0]);
     TEST_ASSERT_NULL(handler.packetCallbacks[1]);
   }
+
+  static void test_CallbackGetsCalledWhenSimulatingDataReceive() {
+    EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
+    const TestDeviceID senderID = TestDeviceID::DEVICE_2;
+    const uint8_t senderMac[6] = {0, 1, 2, 3, 4, 5};
+    const uint8_t data = 0xAC;
+    bool passed = false;
+
+    auto callback = [&](const uint8_t *dataPtr, size_t len,
+                        TestDeviceID sender) {
+      TEST_ASSERT_EQUAL_UINT8(*dataPtr, data);
+      TEST_ASSERT_EQUAL(sizeof(data), len);
+      TEST_ASSERT_EQUAL(static_cast<uint8_t>(senderID),
+                        static_cast<uint8_t>(sender));
+      passed = true;
+    };
+
+    handler.registerCallback(TestPacketType::TYPE_1, callback);
+
+    // Create a proper packet with header
+    struct {
+      uint8_t type;
+      TestDeviceID sender;
+      uint16_t len;
+      uint8_t payload;
+    } packet = {static_cast<uint8_t>(TestPacketType::TYPE_1), senderID,
+                sizeof(data), data};
+
+    handler.onDataRecv(senderMac, reinterpret_cast<const uint8_t *>(&packet),
+                       sizeof(packet));
+    TEST_ASSERT_TRUE(passed);
+  }
 };
 
 void setup() {
@@ -74,6 +106,7 @@ void setup() {
   RUN_TEST(handlerTest.test_packetCallbacksArray_isInitializedEmpty);
   RUN_TEST(handlerTest.test_registerCallback_storesCallback);
   RUN_TEST(handlerTest.test_toIndex_convertsPacketTypeToSize);
+  RUN_TEST(handlerTest.test_CallbackGetsCalledWhenSimulatingDataReceive);
   UNITY_END();
 }
 void loop() {}
