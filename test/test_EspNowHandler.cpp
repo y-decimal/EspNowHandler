@@ -5,13 +5,9 @@
 #include <cstring>
 #include <unity.h>
 
-enum class TestPacketType : uint8_t {
-  PACKET_TYPE_1 = 0,
-  PACKET_TYPE_2 = 1,
-  COUNT = 2
-};
+enum class TestPacketType : uint8_t { TYPE_1, TYPE_2, Count };
 
-enum class TestDeviceID : uint8_t { DEVICE_1 = 0, DEVICE_2 = 1, COUNT = 2 };
+enum class TestDeviceID : uint8_t { DEVICE_1, DEVICE_2, Count };
 
 class EspNowHandlerTest {
 public:
@@ -27,9 +23,9 @@ public:
 
   static void test_toIndex_convertsPacketTypeToSize() {
     size_t index0 = EspNowHandler<TestDeviceID, TestPacketType>::toIndex(
-        TestPacketType::PACKET_TYPE_1);
+        TestPacketType::TYPE_1);
     size_t index1 = EspNowHandler<TestDeviceID, TestPacketType>::toIndex(
-        TestPacketType::PACKET_TYPE_2);
+        TestPacketType::TYPE_1);
 
     TEST_ASSERT_EQUAL(0, index0);
     TEST_ASSERT_EQUAL(1, index1);
@@ -48,7 +44,7 @@ public:
   static void test_registerCallback_storesCallback() {
     EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
     bool result = handler.registerCallback(
-        TestPacketType::PACKET_TYPE_1,
+        TestPacketType::TYPE_1,
         [](const uint8_t *data, size_t len, uint8_t sender) {});
 
     TEST_ASSERT_TRUE(result);
