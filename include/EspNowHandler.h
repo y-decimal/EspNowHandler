@@ -186,7 +186,12 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
     return false;
   }
   PacketHeader packetHeader = {packetType.encoded, len};
-  const uint8_t *data = packetHeader + dataPtr;
+  const uint8_t data[2] = {&packetHeader, dataPtr};
+  esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
+  if (sendSuccess != ESP_OK) {
+    return false;
+  }
+  return true;
 }
 
 HANDLER_TEMPLATE
