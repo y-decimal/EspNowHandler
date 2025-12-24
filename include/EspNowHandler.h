@@ -4,6 +4,7 @@
 #include <DeviceRegistry.h>
 #include <atomic>
 #include <esp_now.h>
+#include <type_traits>
 
 using PacketCallback =
     std::function<void(const uint8_t *dataPtr, size_t len, uint8_t sender)>;
