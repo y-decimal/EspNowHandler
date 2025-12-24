@@ -145,13 +145,15 @@ uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr, size_t len) {
 
 HANDLER_TEMPLATE
 bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
-  const uint8_t targetMac[6] = {};
-  memcpy(targetMac, registry->getDeviceMac(targetID), 6);
-  if (targetMac == nullptr) {
-    return false; // implement pairing here later
+  const uint8_t *macPtr = registry->getDeviceMac(targetID);
+  if (macPtr == nullptr) {
+    if (!pairingMode) {
+      return false;
+    }
+    macPtr = BroadCastMac; // use broadcast when pairing
   }
   esp_now_peer_info_t peerInfo = {};
-  memcpy(peerInfo.peer_addr, targetMac, 6);
+  memcpy(peerInfo.peer_addr, macPtr, 6);
   peerInfo.channel = 0;
   peerInfo.encrypt = false;
   esp_err_t addPeerReturn = esp_now_add_peer(&peerInfo);
