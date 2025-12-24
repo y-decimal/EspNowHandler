@@ -11,11 +11,7 @@ enum class TestPacketType : uint8_t {
   COUNT = 2
 };
 
-enum class TestDeviceID : uint8_t {
-  DEVICE_1 = 0,
-  DEVICE_2 = 1,
-  COUNT = 2
-};
+enum class TestDeviceID : uint8_t { DEVICE_1 = 0, DEVICE_2 = 1, COUNT = 2 };
 
 class EspNowHandlerTest {
 public:
@@ -42,8 +38,8 @@ public:
   static void test_calcChecksum_returnsCorrectChecksum() {
     uint8_t testData[] = {0x01, 0x02, 0x03, 0x04};
     uint8_t checksum =
-        EspNowHandler<TestDeviceID, TestPacketType, 2, 2>::calcChecksum(
-            testData);
+        EspNowHandler<TestDeviceID, TestPacketType>::calcChecksum(
+            testData, sizeof(testData));
     uint8_t expected = 0x01 ^ 0x02 ^ 0x03 ^ 0x04;
 
     TEST_ASSERT_EQUAL(expected, checksum);
