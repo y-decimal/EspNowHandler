@@ -113,7 +113,7 @@ HANDLER_TEMPLATE
 struct HANDLER_PARAMS::PacketHeader {
   uint8_t type;
   DeviceID sender;
-  uint16_t len;
+  size_t len;
 };
 
 // Template implementation
@@ -185,8 +185,11 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
   if (targetMac == nullptr) {
     return false;
   }
-  PacketHeader packetHeader = {packetType.encoded, len};
-  const uint8_t data[2] = {&packetHeader, dataPtr};
+  PacketHeader packetHeader = {packetType.encoded, selfID, len};
+  const uint8_t data[2] = {};
+  memcpy(data, &packetHeader, sizeof(PacketHeader));
+  memcpy(data + sizeof(PacketHeader), len, sizeof(len));
+
   esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
   if (sendSuccess != ESP_OK) {
     return false;
@@ -229,21 +232,21 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
                                 const uint8_t *dataPtr, int data_len) {
   if (!instance)
     return; // Safety check
-  
+
   if (data_len < sizeof(PacketHeader))
     return; // Not enough data for header
-  
+
   PacketHeader header;
   memcpy(&header, dataPtr, sizeof(PacketHeader));
-  
+
   // Bounds check for callback array
   if (header.type >= PacketCount)
     return;
-  
+
   // Check if callback is registered
   if (!instance->packetCallbacks[header.type])
     return;
-  
+
   // Pass data after the header to the callback
   const uint8_t *payloadPtr = dataPtr + sizeof(PacketHeader);
   instance->packetCallbacks[header.type](payloadPtr, header.len, header.sender);
