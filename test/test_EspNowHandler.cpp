@@ -25,7 +25,7 @@ public:
     size_t index0 = EspNowHandler<TestDeviceID, TestPacketType>::toIndex(
         TestPacketType::TYPE_1);
     size_t index1 = EspNowHandler<TestDeviceID, TestPacketType>::toIndex(
-        TestPacketType::TYPE_1);
+        TestPacketType::TYPE_2);
 
     TEST_ASSERT_EQUAL(0, index0);
     TEST_ASSERT_EQUAL(1, index1);
