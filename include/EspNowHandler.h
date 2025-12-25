@@ -269,8 +269,6 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
 
   PacketHeader header;
   memcpy(&header, dataPtr, sizeof(PacketHeader));
-  printf("Packet type: %d, sender: %d, len: %d\n", header.type,
-         static_cast<uint8_t>(header.sender), header.len);
 
   if (header.type == static_cast<uint8_t>(InternalPacket::Discovery) + 128) {
     bool discoverySuccess =
