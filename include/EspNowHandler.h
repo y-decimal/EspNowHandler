@@ -238,28 +238,7 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
   uint8_t retries = 0;
   const uint8_t *targetMac = BroadCastMac;
   while (pairingState != PairingState::Paired && retries < maxRetries) {
-
-    uint8_t fields[2] = {static_cast<uint8_t>(selfID),
-                         static_cast<uint8_t>(targerDeviceID)};
-    const uint8_t checksum = calcChecksum(fields, sizeof(fields));
-
-    DiscoveryPacket discoveryPacket = {selfID, targerDeviceID, checksum};
-
-    PacketHeader packetHeader = {PacketType(InternalPacket::Discovery).encoded,
-                                 selfID, sizeof(DiscoveryPacket)};
-
-    const size_t packetSize = sizeof(PacketHeader) + sizeof(DiscoveryPacket);
-
-    uint8_t data[packetSize] = {};
-    memcpy(data, &packetHeader, sizeof(PacketHeader));
-    memcpy(data + sizeof(PacketHeader), &discoveryPacket,
-           sizeof(DiscoveryPacket));
-#ifndef UNIT_TEST
-    esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
-    if (sendSuccess != ESP_OK) {
-      return false;
-    }
-#endif
+    sendDiscoveryPacket(targetDeviceID);
     retries++;
     if (retries == maxRetries) {
       pairingState = PairingState::Timeout;
