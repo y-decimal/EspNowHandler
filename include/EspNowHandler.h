@@ -33,12 +33,14 @@ private:
   static constexpr size_t DeviceCount = static_cast<size_t>(DeviceID::Count);
   static constexpr size_t PacketCount = static_cast<size_t>(UserPacket::Count);
 
-  static HANDLER_PARAMS *instance; // Static instance pointer for callbacks
+  static HANDLER_PARAMS *instance;
+  // Static instance pointer for callbacks
 
-  bool
-  pairDevice(DeviceID targetDeviceID); // Pairs a specific device by sending
-                                       // broadcasts with the target device ID
-                                       // and the sender device ID
+  bool pairDevice(DeviceID targetDeviceID);
+  // Pairs a specific device by sending
+  // broadcasts with the target device ID
+  // and the sender device ID
+  
   bool handleDiscoveryPacket(const uint8_t *macAddrPtr, const uint8_t *dataPtr);
 
   void sendDiscoveryPacket(DeviceID targetID);
@@ -59,35 +61,32 @@ private:
 public:
   DeviceRegistry<DeviceID> *registry;
 
-  EspNowHandler(
-      DeviceID selfDeviceID,
-      const uint8_t *selfMacPtr); // Initializes the class and registers
-                                  // the given name as the own device name
-                                  // (mainly used for pairing).
+  EspNowHandler(DeviceID selfDeviceID, const uint8_t *selfMacPtr);
+  // Initializes the class and registers
+  // the given name as the own device name
+  // (mainly used for pairing).
 
   bool begin();
 
-  bool registerComms(
-      DeviceID targetID,
-      bool pairingMode =
-          false); // Returns a 1-Byte integer ID for the target device to use as
-                  // the commID for sending packets and for identifying where
-                  // packets were sent from. If no device of the given name
-                  // exists, and pairingMode is true, enters pairing mode to try
-                  // and find the device
+  bool registerComms(DeviceID targetID, bool pairingMode = false,
+                     bool encrypt = false);
+  // Returns a 1-Byte integer ID for the target device to use as
+  // the commID for sending packets and for identifying where
+  // packets were sent from. If no device of the given name
+  // exists, and pairingMode is true, enters pairing mode to try
+  // and find the device
 
-  bool registerCallback(
-      PacketType packetTypeID,
-      PacketCallback); // Registers a callback function for a specific packet
-                       // type. Multiple callbacks per type not possible.
-                       // PacketCallback must be format "void function(const
-                       // uint8_t dataPtr, size_t len, uint8_t sender)"
+  bool registerCallback(PacketType packetTypeID, PacketCallback);
+  // Registers a callback function for a specific packet
+  // type. Multiple callbacks per type not possible.
+  // PacketCallback must be format "void function(const
+  // uint8_t dataPtr, size_t len, uint8_t sender)"
 
   bool sendPacket(DeviceID targetID, PacketType packetType,
-                  const uint8_t *dataPtr,
-                  size_t len); // Sends a packet of the type "packetType" to a
-                               // device with the corresponding commID (as
-                               // returned when calling registerComms)
+                  const uint8_t *dataPtr, size_t len);
+  // Sends a packet of the type "packetType" to a
+  // device with the corresponding commID (as
+  // returned when calling registerComms)
 };
 
 // Full definitions
@@ -161,7 +160,8 @@ uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr, size_t len) {
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
+bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode,
+                                   bool encrypt) {
   const uint8_t *macPtr = registry->getDeviceMac(targetID);
   bool pair = false;
   if (macPtr == nullptr) {
@@ -174,7 +174,7 @@ bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, macPtr, 6);
   peerInfo.channel = 0;
-  peerInfo.encrypt = false;
+  peerInfo.encrypt = encrypt;
   esp_err_t addPeerReturn = esp_now_add_peer(&peerInfo);
   if (addPeerReturn != ESP_OK) {
     return false;
