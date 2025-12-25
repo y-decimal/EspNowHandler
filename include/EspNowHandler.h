@@ -219,14 +219,15 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
     DiscoveryPacket discoveryPacket = {retries, selfID, targerDeviceID,
                                        checksum};
 
-    PacketHeader packetHeader = {InternalPacket::Discovery,
-                                 sizeof(DiscoveryPacket)};
+    PacketHeader packetHeader = {PacketType(InternalPacket::Discovery).encoded,
+                                 selfID, sizeof(DiscoveryPacket)};
 
-    const size_t packetSize = sizeof(PacketHeader + sizeof(DiscoveryPacket));
+    const size_t packetSize = sizeof(PacketHeader) + sizeof(DiscoveryPacket);
 
-    const uint8_t data[packetSize] = {};
-    memcpy(data, packetHeader, sizeof(PacketHeader));
-    memcpy(data, discoveryPacket, sizeof(DiscoveryPacket));
+    uint8_t data[packetSize] = {};
+    memcpy(data, &packetHeader, sizeof(PacketHeader));
+    memcpy(data + sizeof(PacketHeader), &discoveryPacket,
+           sizeof(DiscoveryPacket));
 
     esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
     if (sendSuccess != ESP_OK) {
@@ -260,8 +261,9 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
   if (!instance->packetCallbacks[header.type])
     return;
 
-  if (header.type == InternalPacket::Discovery) {
-    handleDiscoveryPacket(macAddrPtr, dataPtr);
+  if (header.type == static_cast<uint8_t>(InternalPacket::Discovery)) {
+    instance->handleDiscoveredDevice(macAddrPtr, dataPtr);
+    return;
   }
 
   // Pass data after the header to the callback
