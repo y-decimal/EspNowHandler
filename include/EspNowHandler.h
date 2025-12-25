@@ -50,16 +50,20 @@ private:
   static constexpr size_t toIndex(PacketType packetType);
   static uint8_t calcChecksum(const uint8_t *dataPtr, size_t len);
 
-  DeviceRegistry<DeviceID> *registry;
   std::array<PacketCallback, PacketCount> packetCallbacks = {};
   DeviceID selfID;
+  uint8_t selfMac[6] = {};
 
   friend class EspNowHandlerTest;
 
 public:
-  EspNowHandler(DeviceID selfDeviceID); // Initializes the class and registers
-                                        // the given name as the own device name
-                                        // (mainly used for pairing).
+  DeviceRegistry<DeviceID> *registry;
+
+  EspNowHandler(
+      DeviceID selfDeviceID,
+      const uint8_t *selfMacPtr); // Initializes the class and registers
+                                  // the given name as the own device name
+                                  // (mainly used for pairing).
 
   bool begin();
 
@@ -123,9 +127,11 @@ HANDLER_TEMPLATE
 HANDLER_PARAMS *HANDLER_PARAMS::instance = nullptr;
 
 HANDLER_TEMPLATE
-HANDLER_PARAMS::EspNowHandler(DeviceID selfDeviceID) {
-  registry = new DeviceRegistry<DeviceID>();
+HANDLER_PARAMS::EspNowHandler(DeviceID selfDeviceID,
+                              const uint8_t *selfMacPtr) {
+  registry = new DeviceRegistry<DeviceID>(selfDeviceID, selfMacPtr);
   selfID = selfDeviceID;
+  memcpy(selfMac, selfMacPtr, 6);
   instance = this; // Set static instance pointer
 }
 
