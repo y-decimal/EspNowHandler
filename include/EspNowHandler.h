@@ -39,6 +39,8 @@ private:
   pairDevice(DeviceID targetDeviceID); // Pairs a specific device by sending
                                        // broadcasts with the target device ID
                                        // and the sender device ID
+  bool handleDiscoveredDevice(const uint8_t *macAddrPtr,
+                              const uint8_t *dataPtr);
 
   static void onDataSent(const uint8_t *macAddrPtr,
                          esp_now_send_status_t status);
@@ -262,6 +264,16 @@ HANDLER_TEMPLATE
 void HANDLER_PARAMS::onDataSent(const uint8_t *macAddrPtr,
                                 esp_now_send_status_t status) {
   return; // Possibly implement something here later
+}
+
+HANDLER_TEMPLATE
+bool HANDLER_PARAMS::handleDiscoveredDevice(const uint8_t *macAddrPtr,
+                                            const uint8_t *dataPtr) {
+  DiscoveryPacket packet;
+  memcpy(&packet, dataPtr + sizeof(PacketHeader), sizeof(DiscoveryPacket));
+  bool addSuccess = registry->addDevice(packet.senderID, macAddrPtr);
+  registry->saveToFlash();
+  return addSuccess;
 }
 
 #endif
