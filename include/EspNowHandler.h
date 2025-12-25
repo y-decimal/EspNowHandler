@@ -304,7 +304,26 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
                                            const uint8_t *dataPtr) {
   DiscoveryPacket packet;
   memcpy(&packet, dataPtr + sizeof(PacketHeader), sizeof(DiscoveryPacket));
-  printf("Adding device ID %u with MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
+
+  uint8_t fields[3] = {static_cast<uint8_t>(packet.senderID),
+                       static_cast<uint8_t>(packet.targetID),
+                       static_cast<uint8_t>(packet.state)};
+
+  const uint8_t checksum = calcChecksum(fields, sizeof(fields));
+
+  if (checksum != packet.checksum) {
+    printf("[ESPNowHandler] Invalid checksum in discovery packet\n");
+    return false; // Invalid checksum
+  }
+
+  if (packet.targetID != selfID) {
+    printf("[ESPNowHandler] Discovery packet not for us (target ID %u)\n",
+           static_cast<uint8_t>(packet.targetID));
+    return false; // Not for us
+  }
+
+  printf("[ESPNowHandler] Adding device ID %u with MAC "
+         "%02X:%02X:%02X:%02X:%02X:%02X\n",
          static_cast<uint8_t>(packet.senderID), macAddrPtr[0], macAddrPtr[1],
          macAddrPtr[2], macAddrPtr[3], macAddrPtr[4], macAddrPtr[5]);
   bool addSuccess = registry->addDevice(packet.senderID, macAddrPtr);
