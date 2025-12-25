@@ -36,11 +36,11 @@ private:
   static HANDLER_PARAMS *instance;
   // Static instance pointer for callbacks
 
-  bool pairDevice(DeviceID targetDeviceID);
+  bool pairDevice(DeviceID targetDeviceID, bool encrypt);
   // Pairs a specific device by sending
   // broadcasts with the target device ID
   // and the sender device ID
-  
+
   bool handleDiscoveryPacket(const uint8_t *macAddrPtr, const uint8_t *dataPtr);
 
   void sendDiscoveryPacket(DeviceID targetID);
@@ -174,13 +174,13 @@ bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode,
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, macPtr, 6);
   peerInfo.channel = 0;
-  peerInfo.encrypt = encrypt;
+  peerInfo.encrypt = (encrypt && !pairingMode);
   esp_err_t addPeerReturn = esp_now_add_peer(&peerInfo);
   if (addPeerReturn != ESP_OK) {
     return false;
   }
   if (pair == true)
-    pairDevice(targetID);
+    pairDevice(targetID, encrypt);
   return true;
 }
 
@@ -231,7 +231,7 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID) {
+bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID, bool encrypt) {
   printf("[ESPNowHandler] Starting pairing with device ID %u\n",
          static_cast<uint8_t>(targetDeviceID));
   pairingState = PairingState::Waiting;
@@ -249,7 +249,7 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID) {
   if (pairingState == PairingState::Timeout) {
     return false;
   }
-  registerComms(targetDeviceID, false); // Re-register with actual MAC
+  registerComms(targetDeviceID, false, encrypt); // Re-register with actual MAC
   return true;
 }
 
