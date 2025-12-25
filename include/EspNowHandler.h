@@ -255,6 +255,10 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
   if (!instance->packetCallbacks[header.type])
     return;
 
+  if (header.type == InternalPacket::Discovery) {
+    handleDiscoveryPacket(macAddrPtr, dataPtr);
+  }
+
   // Pass data after the header to the callback
   const uint8_t *payloadPtr = dataPtr + sizeof(PacketHeader);
   instance->packetCallbacks[header.type](payloadPtr, header.len, header.sender);
