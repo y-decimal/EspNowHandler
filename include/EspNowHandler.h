@@ -194,7 +194,17 @@ bool HANDLER_PARAMS::registerCallback(PacketType packetType,
 HANDLER_TEMPLATE
 bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
                                 const uint8_t *dataPtr, size_t len) {
-  const uint8_t *targetMac = this->registry->getDeviceMac(targetID);
+  if (targetID == selfID) {
+    printf("[ESPNowHandler] Cannot send packet to self\n");
+    return false; // Cannot send to self
+  }
+  const uint8_t *targetMac;
+  if (PacketType(packetType).encoded ==
+      PacketType(InternalPacket::Discovery).encoded) { // Send to broadcast
+    targetMac = BroadCastMac;
+  } else { // Normal send
+    targetMac = this->registry->getDeviceMac(targetID);
+  }
   if (targetMac == nullptr) {
     return false;
   }
