@@ -327,8 +327,9 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
          static_cast<uint8_t>(packet.senderID), macAddrPtr[0], macAddrPtr[1],
          macAddrPtr[2], macAddrPtr[3], macAddrPtr[4], macAddrPtr[5]);
   bool addSuccess = registry->addDevice(packet.senderID, macAddrPtr);
-  registry->saveToFlash();
-  printf("External device registration: %s\n",
+  if (addSuccess)
+    registry->saveToFlash();
+  printf("[ESPNowHandler] External device registration: %s\n",
          addSuccess ? "success" : "failure");
   pairingState = PairingState::Paired;
   if (packet.state == PairingState::Waiting)
