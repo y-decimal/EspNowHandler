@@ -161,6 +161,7 @@ bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
       return false;
     }
     macPtr = BroadCastMac; // use broadcast when pairing
+    pairDevice(targetID);
   }
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, macPtr, 6);
@@ -221,7 +222,11 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
     PacketHeader packetHeader = {InternalPacket::Discovery,
                                  sizeof(DiscoveryPacket)};
 
-    const uint8_t data[2] = {&discoveryPacket, &packetHeader};
+    const size_t packetSize = sizeof(PacketHeader + sizeof(DiscoveryPacket));
+
+    const uint8_t data[packetSize] = {};
+    memcpy(data, packetHeader, sizeof(PacketHeader));
+    memcpy(data, discoveryPacket, sizeof(DiscoveryPacket));
 
     esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
     if (sendSuccess != ESP_OK) {
