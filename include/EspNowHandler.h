@@ -249,6 +249,7 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
   if (pairingState == PairingState::Timeout) {
     return false;
   }
+  registerComms(targetDeviceID, false); // Re-register with actual MAC
   return true;
 }
 
