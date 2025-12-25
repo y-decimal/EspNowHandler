@@ -330,6 +330,9 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
   registry->saveToFlash();
   printf("External device registration: %s\n",
          addSuccess ? "success" : "failure");
+  pairingState = PairingState::Paired;
+  if (packet.state == PairingState::Waiting)
+    sendDiscoveryPacket(packet.senderID); // Acknowledge by sending back
   return addSuccess;
 }
 
