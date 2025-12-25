@@ -270,11 +270,8 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
   PacketHeader header;
   memcpy(&header, dataPtr, sizeof(PacketHeader));
 
-  if (header.type == static_cast<uint8_t>(InternalPacket::Discovery) + 128) {
-    bool discoverySuccess =
-        instance->handleDiscoveryPacket(macAddrPtr, dataPtr);
-    if (!discoverySuccess)
-      printf("Pairing from external device unsucessful\n");
+  if (header.type == PacketType(InternalPacket::Discovery).encoded) {
+    instance->handleDiscoveryPacket(macAddrPtr, dataPtr);
     return;
   }
 
