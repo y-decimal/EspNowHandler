@@ -231,9 +231,9 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
-  printf("Starting pairing with device ID %u\n",
-         static_cast<uint8_t>(targerDeviceID));
+bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID) {
+  printf("[ESPNowHandler] Starting pairing with device ID %u\n",
+         static_cast<uint8_t>(targetDeviceID));
   pairingState = PairingState::Waiting;
   uint8_t retries = 0;
   const uint8_t *targetMac = BroadCastMac;
