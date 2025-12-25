@@ -256,14 +256,14 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID) {
 HANDLER_TEMPLATE
 void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
                                 const uint8_t *dataPtr, int data_len) {
-  printf("Data received\n");
+  // printf("Data received\n");
   if (!instance) {
-    printf("Instance is null\n");
+    printf("[ESPNowHandler] Instance is null\n");
     return; // Safety check
   }
 
   if (data_len < sizeof(PacketHeader)) {
-    printf("Data length too small: %d\n", data_len);
+    printf("[ESPNowHandler] Data length too small: %d\n", data_len);
     return; // Not enough data for header
   }
 
@@ -282,13 +282,14 @@ void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
 
   // Bounds check for callback array
   if (header.type >= PacketCount) {
-    printf("Header type out of bounds: %d\n", header.type);
+    printf("[ESPNowHandler] Header type out of bounds: %d\n", header.type);
     return;
   }
 
   // Check if callback is registered
   if (!instance->packetCallbacks[header.type]) {
-    printf("No callback registered for header type: %d\n", header.type);
+    printf("[ESPNowHandler] No callback registered for header type: %d\n",
+           header.type);
     return;
   }
 
