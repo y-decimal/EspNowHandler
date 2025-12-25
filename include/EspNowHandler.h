@@ -39,8 +39,7 @@ private:
   pairDevice(DeviceID targetDeviceID); // Pairs a specific device by sending
                                        // broadcasts with the target device ID
                                        // and the sender device ID
-  bool handleDiscoveredDevice(const uint8_t *macAddrPtr,
-                              const uint8_t *dataPtr);
+  bool handleDiscoveryPacket(const uint8_t *macAddrPtr, const uint8_t *dataPtr);
 
   static void onDataSent(const uint8_t *macAddrPtr,
                          esp_now_send_status_t status);
@@ -99,7 +98,6 @@ struct HANDLER_PARAMS::PacketType {
 
 HANDLER_TEMPLATE
 struct HANDLER_PARAMS::DiscoveryPacket {
-  uint8_t sequence;
   DeviceID senderID;
   DeviceID targetID;
   uint8_t checksum;
@@ -134,9 +132,9 @@ bool HANDLER_PARAMS::begin() {
   if (esp_now_init() != ESP_OK) {
     return false;
   }
-  esp_now_register_send_cb(onDataSent);
-  esp_now_register_recv_cb(onDataRecv);
-  return true;
+  esp_err_t registerSentSuccess = esp_now_register_send_cb(onDataSent);
+  esp_err_t regiserRecvSuccess = esp_now_register_recv_cb(onDataRecv);
+  return (regiserRecvSuccess == ESP_OK) && (registerSentSuccess == ESP_OK);
 }
 
 HANDLER_TEMPLATE
@@ -156,13 +154,15 @@ uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr, size_t len) {
 HANDLER_TEMPLATE
 bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
   const uint8_t *macPtr = registry->getDeviceMac(targetID);
+  bool pair = false;
   if (macPtr == nullptr) {
     if (!pairingMode) {
       return false;
     }
     macPtr = BroadCastMac; // use broadcast when pairing
-    pairDevice(targetID);
+    pair = true;
   }
+#ifndef UNIT_TEST
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, macPtr, 6);
   peerInfo.channel = 0;
@@ -171,6 +171,9 @@ bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
   if (addPeerReturn != ESP_OK) {
     return false;
   }
+#endif
+  if (pair == true)
+    pairDevice(targetID);
   return true;
 }
 
@@ -208,16 +211,18 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 
 HANDLER_TEMPLATE
 bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
+  printf("Starting pairing with device ID %u\n",
+         static_cast<uint8_t>(targerDeviceID));
   pairingState = PairingState::Waiting;
   uint8_t retries = 0;
-  while (pairingState == PairingState::Waiting && retries < maxRetries) {
-    const uint8_t *targetMac = BroadCastMac;
-    uint8_t fields[3] = {retries, static_cast<uint8_t>(selfID),
+  const uint8_t *targetMac = BroadCastMac;
+  while (pairingState != PairingState::Paired && retries < maxRetries) {
+
+    uint8_t fields[2] = {static_cast<uint8_t>(selfID),
                          static_cast<uint8_t>(targerDeviceID)};
     const uint8_t checksum = calcChecksum(fields, sizeof(fields));
 
-    DiscoveryPacket discoveryPacket = {retries, selfID, targerDeviceID,
-                                       checksum};
+    DiscoveryPacket discoveryPacket = {selfID, targerDeviceID, checksum};
 
     PacketHeader packetHeader = {PacketType(InternalPacket::Discovery).encoded,
                                  selfID, sizeof(DiscoveryPacket)};
@@ -228,12 +233,17 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
     memcpy(data, &packetHeader, sizeof(PacketHeader));
     memcpy(data + sizeof(PacketHeader), &discoveryPacket,
            sizeof(DiscoveryPacket));
-
+#ifndef UNIT_TEST
     esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
     if (sendSuccess != ESP_OK) {
       return false;
     }
-    delay(3000);
+#endif
+    retries++;
+    if (retries == maxRetries) {
+      pairingState = PairingState::Timeout;
+    }
+    delay(1000);
   }
 
   if (pairingState == PairingState::Timeout) {
@@ -245,25 +255,39 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
 HANDLER_TEMPLATE
 void HANDLER_PARAMS::onDataRecv(const uint8_t *macAddrPtr,
                                 const uint8_t *dataPtr, int data_len) {
-  if (!instance)
+  printf("Data received\n");
+  if (!instance) {
+    printf("Instance is null\n");
     return; // Safety check
+  }
 
-  if (data_len < sizeof(PacketHeader))
+  if (data_len < sizeof(PacketHeader)) {
+    printf("Data length too small: %d\n", data_len);
     return; // Not enough data for header
+  }
 
   PacketHeader header;
   memcpy(&header, dataPtr, sizeof(PacketHeader));
+  printf("Packet type: %d, sender: %d, len: %d\n", header.type,
+         static_cast<uint8_t>(header.sender), header.len);
+
+  if (header.type == static_cast<uint8_t>(InternalPacket::Discovery) + 128) {
+    bool discoverySuccess =
+        instance->handleDiscoveryPacket(macAddrPtr, dataPtr);
+    if (!discoverySuccess)
+      printf("Pairing from external device unsucessful\n");
+    return;
+  }
 
   // Bounds check for callback array
-  if (header.type >= PacketCount)
+  if (header.type >= PacketCount) {
+    printf("Header type out of bounds: %d\n", header.type);
     return;
+  }
 
   // Check if callback is registered
-  if (!instance->packetCallbacks[header.type])
-    return;
-
-  if (header.type == static_cast<uint8_t>(InternalPacket::Discovery)) {
-    instance->handleDiscoveredDevice(macAddrPtr, dataPtr);
+  if (!instance->packetCallbacks[header.type]) {
+    printf("No callback registered for header type: %d\n", header.type);
     return;
   }
 
@@ -279,12 +303,17 @@ void HANDLER_PARAMS::onDataSent(const uint8_t *macAddrPtr,
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::handleDiscoveredDevice(const uint8_t *macAddrPtr,
-                                            const uint8_t *dataPtr) {
+bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
+                                           const uint8_t *dataPtr) {
   DiscoveryPacket packet;
   memcpy(&packet, dataPtr + sizeof(PacketHeader), sizeof(DiscoveryPacket));
+  printf("Adding device ID %u with MAC %02X:%02X:%02X:%02X:%02X:%02X\n",
+         static_cast<uint8_t>(packet.senderID), macAddrPtr[0], macAddrPtr[1],
+         macAddrPtr[2], macAddrPtr[3], macAddrPtr[4], macAddrPtr[5]);
   bool addSuccess = registry->addDevice(packet.senderID, macAddrPtr);
   registry->saveToFlash();
+  printf("External device registration: %s\n",
+         addSuccess ? "success" : "failure");
   return addSuccess;
 }
 
