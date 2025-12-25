@@ -7,7 +7,10 @@
 
 enum class TestPacketType : uint8_t { TYPE_1, TYPE_2, Count };
 
-enum class TestDeviceID : uint8_t { DEVICE_1, DEVICE_2, Count };
+enum class TestDeviceID : uint8_t { DEVICE_1, DEVICE_2, SELF, Count };
+
+const TestDeviceID selfID = TestDeviceID::SELF;
+const uint8_t selfMac[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0x00, 0x01};
 
 class EspNowHandlerTest {
 public:
@@ -42,7 +45,7 @@ public:
   }
 
   static void test_registerCallback_storesCallback() {
-    EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
+    EspNowHandler<TestDeviceID, TestPacketType> handler(selfID, selfMac);
     bool result = handler.registerCallback(
         TestPacketType::TYPE_1,
         [](const uint8_t *data, size_t len, TestDeviceID sender) {});
@@ -52,13 +55,13 @@ public:
   }
 
   static void test_constructor_initializesRegistry() {
-    EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
+    EspNowHandler<TestDeviceID, TestPacketType> handler(selfID, selfMac);
 
     TEST_ASSERT_NOT_NULL(handler.registry);
   }
 
   static void test_packetCallbacksArray_isInitializedEmpty() {
-    EspNowHandler<TestDeviceID, TestPacketType> handler(TestDeviceID::DEVICE_1);
+    EspNowHandler<TestDeviceID, TestPacketType> handler(selfID, selfMac);
 
     TEST_ASSERT_NULL(handler.packetCallbacks[0]);
     TEST_ASSERT_NULL(handler.packetCallbacks[1]);
