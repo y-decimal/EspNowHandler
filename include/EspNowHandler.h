@@ -233,6 +233,7 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targerDeviceID) {
     if (sendSuccess != ESP_OK) {
       return false;
     }
+    delay(3000);
   }
 
   if (pairingState == PairingState::Timeout) {
