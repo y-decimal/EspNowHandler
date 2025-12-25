@@ -206,6 +206,8 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
     targetMac = this->registry->getDeviceMac(targetID);
   }
   if (targetMac == nullptr) {
+    printf("[ESPNowHandler] Target MAC not found for device ID %u\n",
+           static_cast<uint8_t>(targetID));
     return false;
   }
 
@@ -221,6 +223,8 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 
   esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
   if (sendSuccess != ESP_OK) {
+    printf("[ESPNowHandler] Failed to send packet, esp_err_t: %d\n",
+           sendSuccess);
     return false;
   }
   return true;
