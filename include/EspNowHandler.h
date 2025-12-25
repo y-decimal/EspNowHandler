@@ -41,6 +41,8 @@ private:
                                        // and the sender device ID
   bool handleDiscoveryPacket(const uint8_t *macAddrPtr, const uint8_t *dataPtr);
 
+  void sendDiscoveryPacket(DeviceID targetID);
+
   static void onDataSent(const uint8_t *macAddrPtr,
                          esp_now_send_status_t status);
   static void onDataRecv(const uint8_t *macAddrPtr, const uint8_t *dataPtr,
@@ -315,6 +317,25 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
   printf("External device registration: %s\n",
          addSuccess ? "success" : "failure");
   return addSuccess;
+}
+
+HANDLER_TEMPLATE
+void HANDLER_PARAMS::sendDiscoveryPacket(DeviceID targetDeviceID) {
+  PairingState pairingStateLocal = pairingState.load();
+  uint8_t fields[3] = {static_cast<uint8_t>(selfID),
+                       static_cast<uint8_t>(targetDeviceID),
+                       static_cast<uint8_t>(pairingStateLocal)};
+
+  const uint8_t checksum = calcChecksum(fields, sizeof(fields));
+
+  DiscoveryPacket discoveryPacket = {selfID, targetDeviceID, pairingStateLocal,
+                                     checksum};
+
+  const size_t packetSize = sizeof(DiscoveryPacket);
+
+  uint8_t data[packetSize] = {};
+  memcpy(data, &discoveryPacket, sizeof(DiscoveryPacket));
+  sendPacket(targetDeviceID, InternalPacket::Discovery, data, sizeof(data));
 }
 
 #endif
