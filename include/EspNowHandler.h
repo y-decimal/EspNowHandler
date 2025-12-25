@@ -171,7 +171,6 @@ bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
     macPtr = BroadCastMac; // use broadcast when pairing
     pair = true;
   }
-#ifndef UNIT_TEST
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, macPtr, 6);
   peerInfo.channel = 0;
@@ -180,7 +179,6 @@ bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode) {
   if (addPeerReturn != ESP_OK) {
     return false;
   }
-#endif
   if (pair == true)
     pairDevice(targetID);
   return true;
