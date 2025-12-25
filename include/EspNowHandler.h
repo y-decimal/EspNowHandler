@@ -106,6 +106,7 @@ HANDLER_TEMPLATE
 struct HANDLER_PARAMS::DiscoveryPacket {
   DeviceID senderID;
   DeviceID targetID;
+  PairingState state;
   uint8_t checksum;
 };
 
