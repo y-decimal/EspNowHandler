@@ -220,7 +220,7 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
   memcpy(data, &packetHeader, sizeof(PacketHeader));
   memcpy(data + sizeof(PacketHeader), dataPtr, len);
 
-  esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
+  esp_err_t sendSuccess = esp_now_send(targetMac, data, packetSize);
   if (sendSuccess != ESP_OK) {
     printf("[ESPNowHandler] Failed to send packet, esp_err_t: %d\n",
            sendSuccess);
