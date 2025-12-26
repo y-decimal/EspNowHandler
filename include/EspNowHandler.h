@@ -218,8 +218,7 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
   uint8_t data[packetSize] = {};
 
   memcpy(data, &packetHeader, sizeof(PacketHeader));
-  memcpy(data + sizeof(PacketHeader), dataPtr, sizeof(dataPtr));
-  memcpy(data + sizeof(PacketHeader) + sizeof(&dataPtr), &len, sizeof(len));
+  memcpy(data + sizeof(PacketHeader), dataPtr, len);
 
   esp_err_t sendSuccess = esp_now_send(targetMac, data, sizeof(data));
   if (sendSuccess != ESP_OK) {
