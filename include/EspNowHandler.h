@@ -16,6 +16,10 @@ private:
   using PacketCallback =
       std::function<void(const uint8_t *dataPtr, size_t len, DeviceID sender)>;
 
+  template <typename DataStruct>
+  using StructPacketCallback =
+      std::function<void(const DataStruct &, DeviceID sender)>;
+
   static_assert(std::is_enum<UserPacket>::value,
                 "UserPacket must be an enum type");
   static_assert(std::is_same<typename std::underlying_type<UserPacket>::type,
@@ -87,6 +91,14 @@ public:
   // Sends a packet of the type "packetType" to a
   // device with the corresponding commID (as
   // returned when calling registerComms)
+
+  template <typename DataStruct>
+  bool registerCallback(PacketType type,
+                        StructPacketCallback<DataStruct> callback);
+
+  template <typename DataStruct>
+  bool sendPacket(DeviceID targetID, PacketType packetType,
+                  const DataStruct &payload);
 };
 
 // Full definitions
@@ -191,6 +203,28 @@ bool HANDLER_PARAMS::registerCallback(PacketType packetType,
   return true;
 }
 
+// No idea how this part works, AI magic. To reevaluate later
+HANDLER_TEMPLATE
+template <typename DataStruct>
+bool HANDLER_PARAMS::registerCallback(
+    PacketType type, StructPacketCallback<DataStruct> callback) {
+
+  static_assert(std::is_trivially_copyable<DataStruct>::value,
+                "Struct must be trivially copyable");
+
+  packetCallbacks[static_cast<size_t>(type)] =
+      [callback](const uint8_t *dataPtr, size_t len, DeviceID sender) {
+        if (len != sizeof(DataStruct)) {
+          printf("Invalid struct size for packet type\n");
+          return;
+        }
+        DataStruct obj;
+        memcpy(&obj, dataPtr, sizeof(DataStruct));
+        callback(obj, sender);
+      };
+  return true;
+}
+
 HANDLER_TEMPLATE
 bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
                                 const uint8_t *dataPtr, size_t len) {
@@ -227,6 +261,16 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
     return false;
   }
   return true;
+}
+
+HANDLER_TEMPLATE
+template <typename DataStruct>
+bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
+                                const DataStruct &payload) {
+  static_assert(std::is_trivially_copyable<DataStruct>::value,
+                "Struct must be trivially copyable");
+  return sendRawData(targetID, packetType,
+                     reinterpret_cast<const uint8_t *>(&payload), sizeof(T));
 }
 
 HANDLER_TEMPLATE
