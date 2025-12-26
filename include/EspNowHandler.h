@@ -269,9 +269,9 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
                                 const DataStruct &payload) {
   static_assert(std::is_trivially_copyable<DataStruct>::value,
                 "Struct must be trivially copyable");
-  return sendRawData(targetID, packetType,
-                     reinterpret_cast<const uint8_t *>(&payload),
-                     sizeof(DataStruct));
+  return sendPacket(targetID, packetType,
+                    reinterpret_cast<const uint8_t *>(&payload),
+                    sizeof(DataStruct));
 }
 
 HANDLER_TEMPLATE
