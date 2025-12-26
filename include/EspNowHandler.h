@@ -213,7 +213,7 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 
   PacketHeader packetHeader = {packetType.encoded, selfID, len};
 
-  size_t packetSize = sizeof(dataPtr) + sizeof(packetHeader) + sizeof(len);
+  size_t packetSize = sizeof(packetHeader) + len;
 
   uint8_t data[packetSize] = {};
 
