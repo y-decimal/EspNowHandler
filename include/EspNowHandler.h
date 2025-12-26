@@ -212,16 +212,16 @@ bool HANDLER_PARAMS::registerCallback(
   static_assert(std::is_trivially_copyable<DataStruct>::value,
                 "Struct must be trivially copyable");
 
-  packetCallbacks[static_cast<size_t>(type)] =
-      [callback](const uint8_t *dataPtr, size_t len, DeviceID sender) {
-        if (len != sizeof(DataStruct)) {
-          printf("Invalid struct size for packet type\n");
-          return;
-        }
-        DataStruct obj;
-        memcpy(&obj, dataPtr, sizeof(DataStruct));
-        callback(obj, sender);
-      };
+  packetCallbacks[toIndex(type)] = [callback](const uint8_t *dataPtr,
+                                              size_t len, DeviceID sender) {
+    if (len != sizeof(DataStruct)) {
+      printf("Invalid struct size for packet type\n");
+      return;
+    }
+    DataStruct obj;
+    memcpy(&obj, dataPtr, sizeof(DataStruct));
+    callback(obj, sender);
+  };
   return true;
 }
 
