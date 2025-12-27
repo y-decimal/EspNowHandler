@@ -378,6 +378,9 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
   pairingState = PairingState::Paired;
   if (packet.state == PairingState::Waiting) {
     // Add sender as ESP-NOW peer before responding
+    // Note: ESP_ERR_ESPNOW_EXIST is acceptable here as the peer may already be
+    // registered via registerComms(), but we still need to ensure they exist
+    // before sending the response
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, macAddrPtr, 6);
     peerInfo.channel = 0;
