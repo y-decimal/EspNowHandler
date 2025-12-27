@@ -6,19 +6,19 @@
 #include <esp_now.h>
 #include <type_traits>
 
-#define HANDLER_TEMPLATE template <typename DeviceID, typename UserPacket>
+#define HANDLER_TEMPLATE template <typename UniqueID, typename UserPacket>
 
-#define HANDLER_PARAMS EspNowHandler<DeviceID, UserPacket>
+#define HANDLER_PARAMS EspNowHandler<UniqueID, UserPacket>
 
 HANDLER_TEMPLATE
 class EspNowHandler {
 private:
   using PacketCallback =
-      std::function<void(const uint8_t *dataPtr, size_t len, DeviceID sender)>;
+      std::function<void(const uint8_t *dataPtr, size_t len, UniqueID sender)>;
 
   template <typename DataStruct>
   using StructPacketCallback =
-      std::function<void(const DataStruct &, DeviceID sender)>;
+      std::function<void(const DataStruct &, UniqueID sender)>;
 
   static_assert(std::is_enum<UserPacket>::value,
                 "UserPacket must be an enum type");
@@ -34,20 +34,20 @@ private:
   std::atomic<PairingState> pairingState{PairingState::Waiting};
 
   static constexpr uint8_t maxRetries = 30;
-  static constexpr size_t DeviceCount = static_cast<size_t>(DeviceID::Count);
+  static constexpr size_t DeviceCount = static_cast<size_t>(UniqueID::Count);
   static constexpr size_t PacketCount = static_cast<size_t>(UserPacket::Count);
 
   static HANDLER_PARAMS *instance;
   // Static instance pointer for callbacks
 
-  bool pairDevice(DeviceID targetDeviceID, bool encrypt);
+  bool pairDevice(UniqueID targetUniqueID, bool encrypt);
   // Pairs a specific device by sending
   // broadcasts with the target device ID
   // and the sender device ID
 
   bool handleDiscoveryPacket(const uint8_t *macAddrPtr, const uint8_t *dataPtr);
 
-  void sendDiscoveryPacket(DeviceID targetID);
+  void sendDiscoveryPacket(UniqueID targetID);
 
   static void onDataSent(const uint8_t *macAddrPtr,
                          esp_now_send_status_t status);
@@ -57,22 +57,22 @@ private:
   static uint8_t calcChecksum(const uint8_t *dataPtr, size_t len);
 
   std::array<PacketCallback, PacketCount> packetCallbacks = {};
-  DeviceID selfID;
+  UniqueID selfID;
   uint8_t selfMac[6] = {};
 
   friend class EspNowHandlerTest;
 
 public:
-  DeviceRegistry<DeviceID> *registry;
+  DeviceRegistry<UniqueID> *registry;
 
-  EspNowHandler(DeviceID selfDeviceID, const uint8_t *selfMacPtr);
+  EspNowHandler(UniqueID selfUniqueID, const uint8_t *selfMacPtr);
   // Initializes the class and registers
   // the given name as the own device name
   // (mainly used for pairing).
 
   bool begin();
 
-  bool registerComms(DeviceID targetID, bool pairingMode = false,
+  bool registerComms(UniqueID targetID, bool pairingMode = false,
                      bool encrypt = false);
   // Returns a 1-Byte integer ID for the target device to use as
   // the commID for sending packets and for identifying where
@@ -86,7 +86,7 @@ public:
   // PacketCallback must be format "void function(const
   // uint8_t dataPtr, size_t len, uint8_t sender)"
 
-  bool sendPacket(DeviceID targetID, PacketType packetType,
+  bool sendPacket(UniqueID targetID, PacketType packetType,
                   const uint8_t *dataPtr, size_t len);
   // Sends a packet of the type "packetType" to a
   // device with the corresponding commID (as
@@ -97,7 +97,7 @@ public:
                         StructPacketCallback<DataStruct> callback);
 
   template <typename DataStruct>
-  bool sendPacket(DeviceID targetID, PacketType packetType,
+  bool sendPacket(UniqueID targetID, PacketType packetType,
                   const DataStruct &payload);
 };
 
@@ -115,8 +115,8 @@ struct HANDLER_PARAMS::PacketType {
 
 HANDLER_TEMPLATE
 struct HANDLER_PARAMS::DiscoveryPacket {
-  DeviceID senderID;
-  DeviceID targetID;
+  UniqueID senderID;
+  UniqueID targetID;
   PairingState state;
   uint8_t checksum;
 };
@@ -130,7 +130,7 @@ enum class HANDLER_PARAMS::InternalPacket : uint8_t { Discovery, Count };
 HANDLER_TEMPLATE
 struct HANDLER_PARAMS::PacketHeader {
   uint8_t type;
-  DeviceID sender;
+  UniqueID sender;
   size_t len;
 };
 
@@ -139,10 +139,10 @@ HANDLER_TEMPLATE
 HANDLER_PARAMS *HANDLER_PARAMS::instance = nullptr;
 
 HANDLER_TEMPLATE
-HANDLER_PARAMS::EspNowHandler(DeviceID selfDeviceID,
+HANDLER_PARAMS::EspNowHandler(UniqueID selfUniqueID,
                               const uint8_t *selfMacPtr) {
-  registry = new DeviceRegistry<DeviceID>(selfDeviceID, selfMacPtr);
-  selfID = selfDeviceID;
+  registry = new DeviceRegistry<UniqueID>(selfUniqueID, selfMacPtr);
+  selfID = selfUniqueID;
   memcpy(selfMac, selfMacPtr, 6);
   instance = this; // Set static instance pointer
 }
@@ -172,7 +172,7 @@ uint8_t HANDLER_PARAMS::calcChecksum(const uint8_t *dataPtr, size_t len) {
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::registerComms(DeviceID targetID, bool pairingMode,
+bool HANDLER_PARAMS::registerComms(UniqueID targetID, bool pairingMode,
                                    bool encrypt) {
   const uint8_t *macPtr = registry->getDeviceMac(targetID);
   bool pair = false;
@@ -213,7 +213,7 @@ bool HANDLER_PARAMS::registerCallback(
                 "Struct must be trivially copyable");
 
   packetCallbacks[toIndex(type)] = [callback](const uint8_t *dataPtr,
-                                              size_t len, DeviceID sender) {
+                                              size_t len, UniqueID sender) {
     if (len != sizeof(DataStruct)) {
       printf("Invalid struct size for packet type\n");
       return;
@@ -226,7 +226,7 @@ bool HANDLER_PARAMS::registerCallback(
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
+bool HANDLER_PARAMS::sendPacket(UniqueID targetID, PacketType packetType,
                                 const uint8_t *dataPtr, size_t len) {
   if (targetID == selfID) {
     printf("[ESPNowHandler] Cannot send packet to self\n");
@@ -265,7 +265,7 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 
 HANDLER_TEMPLATE
 template <typename DataStruct>
-bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
+bool HANDLER_PARAMS::sendPacket(UniqueID targetID, PacketType packetType,
                                 const DataStruct &payload) {
   static_assert(std::is_trivially_copyable<DataStruct>::value,
                 "Struct must be trivially copyable");
@@ -275,14 +275,14 @@ bool HANDLER_PARAMS::sendPacket(DeviceID targetID, PacketType packetType,
 }
 
 HANDLER_TEMPLATE
-bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID, bool encrypt) {
+bool HANDLER_PARAMS::pairDevice(UniqueID targetUniqueID, bool encrypt) {
   printf("[ESPNowHandler] Starting pairing with device ID %u\n",
-         static_cast<uint8_t>(targetDeviceID));
+         static_cast<uint8_t>(targetUniqueID));
   pairingState = PairingState::Waiting;
   uint8_t retries = 0;
   const uint8_t *targetMac = BroadCastMac;
   while (pairingState != PairingState::Paired && retries < maxRetries) {
-    sendDiscoveryPacket(targetDeviceID);
+    sendDiscoveryPacket(targetUniqueID);
     retries++;
     if (retries == maxRetries) {
       pairingState = PairingState::Timeout;
@@ -293,7 +293,7 @@ bool HANDLER_PARAMS::pairDevice(DeviceID targetDeviceID, bool encrypt) {
   if (pairingState == PairingState::Timeout) {
     return false;
   }
-  registerComms(targetDeviceID, false, encrypt); // Re-register with actual MAC
+  registerComms(targetUniqueID, false, encrypt); // Re-register with actual MAC
   return true;
 }
 
@@ -382,22 +382,22 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
 }
 
 HANDLER_TEMPLATE
-void HANDLER_PARAMS::sendDiscoveryPacket(DeviceID targetDeviceID) {
+void HANDLER_PARAMS::sendDiscoveryPacket(UniqueID targetUniqueID) {
   PairingState pairingStateLocal = pairingState.load();
   uint8_t fields[3] = {static_cast<uint8_t>(selfID),
-                       static_cast<uint8_t>(targetDeviceID),
+                       static_cast<uint8_t>(targetUniqueID),
                        static_cast<uint8_t>(pairingStateLocal)};
 
   const uint8_t checksum = calcChecksum(fields, sizeof(fields));
 
-  DiscoveryPacket discoveryPacket = {selfID, targetDeviceID, pairingStateLocal,
+  DiscoveryPacket discoveryPacket = {selfID, targetUniqueID, pairingStateLocal,
                                      checksum};
 
   const size_t packetSize = sizeof(DiscoveryPacket);
 
   uint8_t data[packetSize] = {};
   memcpy(data, &discoveryPacket, sizeof(DiscoveryPacket));
-  sendPacket(targetDeviceID, InternalPacket::Discovery, data, sizeof(data));
+  sendPacket(targetUniqueID, InternalPacket::Discovery, data, sizeof(data));
 }
 
 #endif
