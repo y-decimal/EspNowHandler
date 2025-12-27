@@ -385,6 +385,7 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
     esp_err_t addPeerReturn = esp_now_add_peer(&peerInfo);
     if (addPeerReturn != ESP_OK && addPeerReturn != ESP_ERR_ESPNOW_EXIST) {
       printf("[ESPNowHandler] Failed to add peer for response: %d\n", addPeerReturn);
+      return addSuccess; // Skip response if peer addition failed
     }
     sendDiscoveryPacket(packet.senderID); // Acknowledge by sending back
   }
