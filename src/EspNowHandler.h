@@ -376,8 +376,18 @@ bool HANDLER_PARAMS::handleDiscoveryPacket(const uint8_t *macAddrPtr,
   printf("[ESPNowHandler] External device registration: %s\n",
          addSuccess ? "success" : "failure");
   pairingState = PairingState::Paired;
-  if (packet.state == PairingState::Waiting)
+  if (packet.state == PairingState::Waiting) {
+    // Add sender as ESP-NOW peer before responding
+    esp_now_peer_info_t peerInfo = {};
+    memcpy(peerInfo.peer_addr, macAddrPtr, 6);
+    peerInfo.channel = 0;
+    peerInfo.encrypt = false;
+    esp_err_t addPeerReturn = esp_now_add_peer(&peerInfo);
+    if (addPeerReturn != ESP_OK && addPeerReturn != ESP_ERR_ESPNOW_EXIST) {
+      printf("[ESPNowHandler] Failed to add peer for response: %d\n", addPeerReturn);
+    }
     sendDiscoveryPacket(packet.senderID); // Acknowledge by sending back
+  }
   return addSuccess;
 }
 
